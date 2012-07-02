@@ -78,6 +78,11 @@ class Map
   get: (key) ->
     @coll[hash(key)]
 
+OidSupport =
+  hash: hash
+  oid: oid
+  equals: equals
+
 
 ########################################################
 # key codes....
@@ -178,19 +183,19 @@ class KeyEventManager
   keydown: (e) =>
     @activeKeys.add(e.which)
     mapping = @mappings.get(@combo())
-    mapping.down(@context(e.which, e.target)) if mapping?.down?
+    mapping.down.call(e.target, @context(e.which, e.target)) if mapping?.down?
 
   keyup: (e) =>
     @activeKeys.remove(e.which)
     mapping = @mappings.get(@combo())
-    maping.up(@context(e.which, e.target)) if mapping?.up?
+    maping.up.call(e.target, @context(e.which, e.target)) if mapping?.up?
 
 
 jQuery.fn.keyboard = plugin = (block) ->
   @.each ->
     mappings = new Map()
     block.apply(_.extend(Keys,
-      bind:(keys) ->
+      bind:(keys...) ->
         combo = new KeyCombination(keys)
         mapping = {}
         mappings.put combo, mapping
@@ -209,8 +214,5 @@ plugin.KeyEventManager = KeyEventManager
 plugin.commons =
   Set : Set
   Map : Map
-  OidSupport :
-    hash: hash
-    oid: oid
-    equals: equals
+  OidSupport : OidSupport
 

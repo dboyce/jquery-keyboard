@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<meta charset="UTF-8" />
+	<title>QUnit Test Suite</title>
+
+    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="../node_modules/underscore/underscore.js"></script>
+    <script type="text/javascript" src="../lib/jquery-keyboard.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#bar').keyboard(function() {
+                this.bind(this.ctl, this.a).down(function(){
+                    $(this).parent().append($('<input name="bar" />'))
+                })
+            });
+        });
+    </script>
+
+
+</head>
+<body>
+    <form id="foo">
+        <input id="bar" name="bar"/>
+    </form>
+</body>
+</html>

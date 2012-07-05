@@ -163,19 +163,26 @@ class KeyCombination
 # maps keystrokes to actions
 ########################################################
 class KeyEventManager
-  constructor: (@mappings, @element) ->
+  constructor: (@mappings, @selector) ->
     @mappings = new Map() unless @mappings
     @focus()
-    $(@element).focus(@focus).keydown(@keydown).keyup(@keyup)
+    $(document).on({
+      focus: @focus
+      keydown: @keydown
+      keyup: @keyup
+      },
+      @selector
+    )
 
   combo: ->
     new KeyCombination(@activeKeys.values())
 
-  context: (key, target) ->
+  context: (key, target, e) ->
     key: key
     dispatcher: @
     keys: @activeKeys
     target: target
+    e: e
 
   focus: =>
       @activeKeys = new Set()
@@ -183,28 +190,33 @@ class KeyEventManager
   keydown: (e) =>
     @activeKeys.add(e.which)
     mapping = @mappings.get(@combo())
-    mapping.down.call(e.target, @context(e.which, e.target)) if mapping?.down?
+    if mapping?.down?
+      mapping.down.call(e.target, @context(e.which, e.target, e))
+      e.preventDefault()
 
   keyup: (e) =>
     @activeKeys.remove(e.which)
     mapping = @mappings.get(@combo())
-    maping.up.call(e.target, @context(e.which, e.target)) if mapping?.up?
+    if mapping?.up?
+      maping.up.call(e.target, @context(e.which, e.target, e))
+      e.preventDefault()
 
 
 jQuery.fn.keyboard = plugin = (block) ->
-  @.each ->
-    mappings = new Map()
-    block.apply(_.extend(Keys,
-      bind:(keys...) ->
-        combo = new KeyCombination(keys)
-        mapping = {}
-        mappings.put combo, mapping
-        down: (fn) ->
-          mapping.down = fn
-        up: (fn) ->
-          mapping.up = fn
-    ))
-    keyMan = new KeyEventManager(mappings, $(@))
+
+  mappings = new Map()
+  block.apply(_.extend(
+    bind:(keys...) ->
+      combo = new KeyCombination(keys)
+      mapping = {}
+      mappings.put combo, mapping
+      down: (fn) ->
+        mapping.down = fn
+      up: (fn) ->
+        mapping.up = fn
+    ,Keys
+  ))
+  keyMan = new KeyEventManager(mappings, @selector)
 
 
 # for testing...

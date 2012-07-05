@@ -1,3 +1,5 @@
+$ = jQuery
+
 ########################################################
 # some basic collections
 ########################################################
@@ -162,12 +164,28 @@ class KeyCombination
 ########################################################
 # maps keystrokes to actions
 ########################################################
+
+# the active keys are stored at the module level, since
+# keyboard focus change without depressing keys.
+
+activeKeys = new Set()
+
+# ensure we catch all key events
+$(document).ready ->
+  $(document).keydown (e) ->
+    activeKeys.add(e.which)
+  $(document).keyup (e) ->
+    activeKeys.add(e.which)
+  $(window).blur (e) ->
+    activeKeys.clear()
+
+
+
 class KeyEventManager
   constructor: (@mappings, @selector) ->
     @mappings = new Map() unless @mappings
-    @focus()
+
     $(document).on({
-      focus: @focus
       keydown: @keydown
       keyup: @keyup
       },
@@ -175,31 +193,29 @@ class KeyEventManager
     )
 
   combo: ->
-    new KeyCombination(@activeKeys.values())
+    new KeyCombination(activeKeys.values())
 
   context: (key, target, e) ->
     key: key
     dispatcher: @
-    keys: @activeKeys
+    keys: activeKeys
     target: target
     e: e
 
-  focus: =>
-      @activeKeys = new Set()
 
   keydown: (e) =>
-    @activeKeys.add(e.which)
+    activeKeys.add(e.which)
     mapping = @mappings.get(@combo())
     if mapping?.down?
       mapping.down.call(e.target, @context(e.which, e.target, e))
-      e.preventDefault()
+      e.preventDefault?()
 
   keyup: (e) =>
-    @activeKeys.remove(e.which)
+    activeKeys.remove(e.which)
     mapping = @mappings.get(@combo())
     if mapping?.up?
       maping.up.call(e.target, @context(e.which, e.target, e))
-      e.preventDefault()
+      e.preventDefault?()
 
 
 jQuery.fn.keyboard = plugin = (block) ->
